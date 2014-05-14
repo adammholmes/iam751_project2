@@ -38,7 +38,7 @@ adi(mat_t *u, double h, double dt)
     }
     
     // Boundary values at x(L) and y(m)
-    w[m][u->xsize-1] = 0;
+    mat_set(u->xsize-1, m, 0, w);
     
     // Second loop for TDMA
     for (el = u->xsize-2; el >= 0; el--) {
@@ -66,7 +66,7 @@ adi(mat_t *u, double h, double dt)
     }
     
     // Boundary values at x(el) and y(M)
-    u[u->xsize-1][el] = 0;
+    mat_set(el, u->xsize-1, 0, u);
     
     // Second loop for TDMA
     for (m = u->xsize-2; m >= 0; m--) {
@@ -79,8 +79,8 @@ adi(mat_t *u, double h, double dt)
   
   // Enforce boundary conditions
   int i; for (i = 0; i < u->xsize; i++) {
-    u[i][0] = 0;
-    u[i][u->xsize-1] = 0;
+    mat_set(0, i, 0, u);
+    mat_set(u->xsize-1, i, 0, u);
   }
   
   mat_free(w);

@@ -45,4 +45,5 @@ ffmpeg -start_number 0 -i data/%d.png heatpde.mp4 > /dev/null 2>&1
 
 ### CLEAN UP
 echo "[4/4] Cleaning up..."
-rm -rf data/*
+rm -rf data/*.png
+rm -rf data/*.dat

@@ -6,7 +6,7 @@
 # Author: Adam M. Holmes > /dev/null 2>&1
 
 
-TIMESTEPS=1000
+TIMESTEPS=200
 LAST=$(( $TIMESTEPS - 1 ))
 
 

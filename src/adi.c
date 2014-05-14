@@ -20,13 +20,16 @@ adi(mat_t *u, double h, double dt)
   mat_t *w = mat_init(u->xsize, u->ysize);
   
   // Y direction ---------------------------------------------------------------
-  int m; for(m = 1; m < u->xsize-1; m++) {
+  int m; for (m = 1; m < u->xsize-1; m++) {
     
     double *p = calloc(u->xsize, sizeof(double)); assert(p);
     double *q = calloc(u->xsize, sizeof(double)); assert(q);
-    q[1] = 0; // Boundary values at x(0) and y(m)
     
-    int el; for(el = 1; el < u->xsize-1; el++) {
+    // Boundary values at x(0) and y(m)
+    q[1] = 0;
+    
+    // First loop for TDMA
+    int el; for (el = 1; el < u->xsize-1; el++) {
       double dd = mat_get(el, m, u) + halfbmuy*(mat_get(el, m-1, u) -
                   2*mat_get(el, m, u) + mat_get(el, m+1, u));
       double denom = 1 + halfbmux*(2 - p[el]);
@@ -34,21 +37,27 @@ adi(mat_t *u, double h, double dt)
       q[el+1] = (dd + halfbmux*q[el]) / denom;
     }
     
+    // Boundary values at x(L) and y(m)
+    w[m][u->xsize-1] = 0;
+    
+    // Second loop for TDMA
     for (el = u->xsize-2; el >= 0; el--) {
       double val = p[el+1] * mat_get(el+1, m, w) + q[el+1];
       mat_set(el, m, val, w);
     }
     
+    free(p); free(q);
   }
 
   // X direction ---------------------------------------------------------------
-  int el; for(el = 1; el < u->xsize-1; el++) {
+  int el; for (el = 1; el < u->xsize-1; el++) {
     
     double *p = calloc(u->xsize, sizeof(double)); assert(p);
     double *q = calloc(u->xsize, sizeof(double)); assert(q);
     q[1] = 0; // Boundary values at x(el) and y(0)
   
-    int m; for(m = 1; m < u->xsize-1; m++) {
+    // First loop for TDMA
+    int m; for (m = 1; m < u->xsize-1; m++) {
       double dd = mat_get(el, m, w) + halfbmux*(mat_get(el-1, m, w) -
                   2*mat_get(el, m, w) + mat_get(el+1, m, w));
       double denom = 1 + halfbmuy*(2 - p[m]);
@@ -56,11 +65,22 @@ adi(mat_t *u, double h, double dt)
       q[m+1] = (dd + halfbmux*q[m]) / denom;
     }
     
+    // Boundary values at x(el) and y(M)
+    u[u->xsize-1][el] = 0;
+    
+    // Second loop for TDMA
     for (m = u->xsize-2; m >= 0; m--) {
       double val = p[m+1] * mat_get(el, m+1, u) + q[m+1];
       mat_set(el, m, val, u);
     }
     
+    free(p); free(q);
+  }
+  
+  // Enforce boundary conditions
+  int i; for (i = 0; i < u->xsize; i++) {
+    u[i][0] = 0;
+    u[i][u->xsize-1] = 0;
   }
   
   mat_free(w);

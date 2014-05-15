@@ -51,9 +51,6 @@ else
 fi
 
 
-
-
-
 ### CLEAN UP
 echo "[4/4] Cleaning up..."
 rm -rf data/*.png

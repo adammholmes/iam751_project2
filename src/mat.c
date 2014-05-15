@@ -47,7 +47,7 @@ mat_get(int x, int y, mat_t *a)
 }
 
 
-/* Print a matrix to the given output steam */
+/* Print a matrix to the given output stream */
 void
 mat_print(FILE *stream, mat_t *a)
 {
@@ -60,7 +60,7 @@ mat_print(FILE *stream, mat_t *a)
 }
 
 
-/* Print a matrix to the given output steam in a gnuplot friendly way */
+/* Print a matrix to the given output stream in a gnuplot friendly way */
 void
 mat_print_gnuplot(FILE *stream, mat_t *a, double h)
 {

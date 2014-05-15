@@ -3,24 +3,26 @@
 # Runs my ADI PDE solver and creates a video from the
 # output generated using gnuplot and ffmpeg.
 #
-# Author: Adam M. Holmes > /dev/null 2>&1
+# Author: Adam M. Holmes
 
 
-TIMESTEPS=200
-LAST=$(( $TIMESTEPS - 1 ))
+TIMESTEPS=400
+PROCESSES=4
 
 
 ### RUN PROGRAM
 echo "[1/4] Running PDE solver..."
-./heatpde $TIMESTEPS
+#./heatpde $TIMESTEPS
+mpirun -n $PROCESSES ./heatpde $TIMESTEPS
 
 
 ### GENERATE PLOTS
+LAST=$(( $TIMESTEPS - 1 ))
 echo "[2/4] Generating plots from data..."
 for i in `seq 0 $LAST`;
 do
 TIME=$(echo "$i * 0.0002" | bc -l)
-gnuplot << EOF
+gnuplot > /dev/null 2>&1 << EOF
 set term png
 set output "data/$i.png"
 set xrange [0:2]

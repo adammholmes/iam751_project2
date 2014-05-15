@@ -4,6 +4,8 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AM_INIT_AUTOMAKE([foreign])
 
+AC_PROG_CC([mpicc])
+
 AC_PROG_CC_C99
 if test -z "$CC" || test "$CC" = "no"; then
   AC_MSG_ERROR([No suitable C99 compiler found])

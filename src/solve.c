@@ -9,13 +9,14 @@
  * to exist for the program to work. A data file is created for
  * every timestep.
  *
+ * Each line of the ADI scheme is done in parallel using MPI.
+ *
  * Author: Adam M. Holmes
  *
  * http://youtu.be/dpAJEny81cU
  */
 
 #include <math.h>
-#include <string.h>
 #include "adi.h"
 
 #define H 0.01
@@ -59,22 +60,35 @@ main(int argc, char **argv)
   mat_print_gnuplot(f, temp, H);
   fclose(f);
   
+  MPI_Init(NULL, NULL);
+  
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  
   // Step through time
   int t; for (t = 1; t < timesteps; t++) {
     // Perform ADI to advance one timestep
     adi(temp, H, DT);
     
-    // Figure out name of this timestep's output file
-    char filename[10 + (int)(log10(t)+1)];
-    strcpy(filename, "data/");
-    sprintf(&filename[5], "%d", t);
-    strcat(filename, ".dat");
+    // First process should write results to a file
+    if (rank == 0) {
+      // Figure out name of this timestep's output file
+      char filename[10 + (int)(log10(t)+1)];
+      strcpy(filename, "data/");
+      sprintf(&filename[5], "%d", t);
+      strcat(filename, ".dat");
     
-    // Create this timestep's data file; write to it; close file
-    FILE *f = fopen(filename, "w"); assert(f);
-    mat_print_gnuplot(f, temp, H);
-    fclose(f);
+      // Create this timestep's data file; write to it; close file
+      FILE *f = fopen(filename, "w"); assert(f);
+      mat_print_gnuplot(f, temp, H);
+      fclose(f);
+    }
+    
+    MPI_Barrier(MPI_COMM_WORLD);
   }
+  
+  MPI_Finalize();
   
   return 0;
 }

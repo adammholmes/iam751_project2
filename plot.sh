@@ -4,6 +4,8 @@
 # output generated using gnuplot and ffmpeg.
 #
 # Author: Adam M. Holmes
+#
+# http://youtu.be/YIZ3Oq-t8t4
 
 
 TIMESTEPS=400

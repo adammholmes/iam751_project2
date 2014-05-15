@@ -47,16 +47,18 @@ adi(mat_t *u, double h, double dt)
     }
     
     // Grab the last group of lines
-    int m; for (m = l_per_proc * (size-2); m < lines-1; m++) {
-      double res[lines];
-      MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      // Save result to w
-      for (el = 1; el < u->xsize-1; el++) {
-        mat_set(el, m, res[el], w);
+    if (size > 2) {
+      int m; for (m = l_per_proc * (size-2); m < lines-1; m++) {
+        double res[lines];
+        MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        // Save result to w
+        for (el = 1; el < u->xsize-1; el++) {
+          mat_set(el, m, res[el], w);
+        }
       }
     }
     
-  } else if (rank == size-1) {
+  } else if (rank == size-1 && size > 2) {
     
     // Last grouping of lines
     int m; for (m = l_per_proc * (size-2); m < lines-1; m++) {
@@ -104,12 +106,14 @@ adi(mat_t *u, double h, double dt)
     }
     
     // Grab the last group of lines
-    int el; for (el = l_per_proc * (size-2); el < lines-1; el++) {
-      double res[lines];
-      MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      // Save result to w
-      for (m = 1; m < u->xsize-1; m++) {
-        mat_set(el, m, res[m], u);
+    if (size > 2) {
+      int el; for (el = l_per_proc * (size-2); el < lines-1; el++) {
+        double res[lines];
+        MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        // Save result to w
+        for (m = 1; m < u->xsize-1; m++) {
+          mat_set(el, m, res[m], u);
+        }
       }
     }
     
@@ -119,7 +123,7 @@ adi(mat_t *u, double h, double dt)
       mat_set(u->xsize-1, i, 0, u);
     }
     
-  } else if (rank == size-1) {
+  } else if (rank == size-1 && size > 2) {
     
     // Last grouping of lines
     int el; for (el = l_per_proc * (size-2); el < lines-1; el++) {

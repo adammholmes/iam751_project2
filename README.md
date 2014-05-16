@@ -14,4 +14,4 @@ notes
 -----
 Use ***plot.sh*** to run the program and generate an mp4 video from the results.
 
-http://youtu.be/dpAJEny81cU
+http://youtu.be/YIZ3Oq-t8t4

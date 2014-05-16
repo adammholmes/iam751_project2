@@ -22,7 +22,7 @@ adi(mat_t *u, double h, double dt)
   int lines = u->xsize;
   int l_per_proc = (lines / (size-1));
   
-  assert(size > 1);
+  assert(size > 2);
   assert(lines > size);
   
   // Intermediate values used in Peaceman-Rachford difference equations
@@ -34,37 +34,11 @@ adi(mat_t *u, double h, double dt)
   if (rank == 0) {
     
     // Grab every line from every process
-    if (size > 2) {
-      int t; for (t = 1; t < size-1; t++) {
-        int m; for (m = l_per_proc * (t-1); m < l_per_proc * t; m++) {
-          if (t == 1 && m == 0) {m++;}
-          double res[lines];
-          MPI_Recv(&res, lines, MPI_DOUBLE, t, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          // Save result to w
-          for (el = 1; el < u->xsize-1; el++) {
-            mat_set(el, m, res[el], w);
-          }
-        }
-      }
-    } else { // Basically a serial solution
-      int t; for (t = 1; t < size-1; t++) {
-        int m; for (m = l_per_proc * (t-1); m < size-1; m++) {
-          if (t == 1 && m == 0) {m++;}
-          double res[lines];
-          MPI_Recv(&res, lines, MPI_DOUBLE, t, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          // Save result to w
-          for (el = 1; el < u->xsize-1; el++) {
-            mat_set(el, m, res[el], w);
-          }
-        }
-      }
-    }
-    
-    // Grab the last group of lines
-    if (size > 2) {
-      int m; for (m = l_per_proc * (size-2); m < lines-1; m++) {
+    int t; for (t = 1; t < size-1; t++) {
+      int m; for (m = l_per_proc * (t-1); m < l_per_proc * t; m++) {
+        if (t == 1 && m == 0) {m++;}
         double res[lines];
-        MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&res, lines, MPI_DOUBLE, t, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         // Save result to w
         for (el = 1; el < u->xsize-1; el++) {
           mat_set(el, m, res[el], w);
@@ -72,22 +46,22 @@ adi(mat_t *u, double h, double dt)
       }
     }
     
-  } else if (rank == size-1 && size > 2) {
+    // Grab the last group of lines
+    int m; for (m = l_per_proc * (size-2); m < lines-1; m++) {
+      double res[lines];
+      MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      // Save result to w
+      for (el = 1; el < u->xsize-1; el++) {
+        mat_set(el, m, res[el], w);
+      }
+    }
+    
+  } else if (rank == size-1) {
     
     // Last grouping of lines
     int m; for (m = l_per_proc * (size-2); m < lines-1; m++) {
       double *x = y_direction(u, dt, h, m);
       MPI_Send(x, lines, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-      free(x);
-    }
-    
-  } else if (rank == 1 && size == 2) {
-    
-    // Basically a serial solution
-    int m; for (m = l_per_proc * (rank-1); m < lines-1; m++) {
-      if (rank == 1 && m == 0) {m++;}
-      double *x = y_direction(u, dt, h, m);
-      MPI_Send(x, lines, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
       free(x);
     }
     
@@ -117,41 +91,25 @@ adi(mat_t *u, double h, double dt)
   if (rank == 0) {
 
     // Grab every line from every process
-    if (size > 2) {
-      int t; for (t = 1; t < size-1; t++) {
-        int el; for (el = l_per_proc * (t-1); el < l_per_proc * t; el++) {
-          if (t == 1 && el == 0) {el++;}
-          double res[lines];
-          MPI_Recv(&res, lines, MPI_DOUBLE, t, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          // Save result to w
-          for (m = 1; m < u->xsize-1; m++) {
-            mat_set(el, m, res[m], u);
-          }
-        }
-      }
-    } else { // Basically a serial solution
-      int t; for (t = 1; t < size-1; t++) {
-        int el; for (el = l_per_proc * (t-1); el < lines-1; el++) {
-          if (t == 1 && el == 0) {el++;}
-          double res[lines];
-          MPI_Recv(&res, lines, MPI_DOUBLE, t, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          // Save result to w
-          for (m = 1; m < u->xsize-1; m++) {
-            mat_set(el, m, res[m], u);
-          }
+    int t; for (t = 1; t < size-1; t++) {
+      int el; for (el = l_per_proc * (t-1); el < l_per_proc * t; el++) {
+        if (t == 1 && el == 0) {el++;}
+        double res[lines];
+        MPI_Recv(&res, lines, MPI_DOUBLE, t, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        // Save result to w
+        for (m = 1; m < u->xsize-1; m++) {
+          mat_set(el, m, res[m], u);
         }
       }
     }
     
     // Grab the last group of lines
-    if (size > 2) {
-      int el; for (el = l_per_proc * (size-2); el < lines-1; el++) {
-        double res[lines];
-        MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        // Save result to w
-        for (m = 1; m < u->xsize-1; m++) {
-          mat_set(el, m, res[m], u);
-        }
+    int el; for (el = l_per_proc * (size-2); el < lines-1; el++) {
+      double res[lines];
+      MPI_Recv(&res, lines, MPI_DOUBLE, size-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      // Save result to w
+      for (m = 1; m < u->xsize-1; m++) {
+        mat_set(el, m, res[m], u);
       }
     }
     
@@ -161,22 +119,12 @@ adi(mat_t *u, double h, double dt)
       mat_set(u->xsize-1, i, 0, u);
     }
     
-  } else if (rank == size-1 && size > 2) {
+  } else if (rank == size-1) {
     
     // Last grouping of lines
     int el; for (el = l_per_proc * (size-2); el < lines-1; el++) {
       double *x = x_direction(w, dt, h, el);
       MPI_Send(x, lines, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-      free(x);
-    }
-    
-  } else if (rank == 1 && size == 2) {
-    
-    // Basically a serial solution
-    int el; for (el = l_per_proc * (rank-1); el < lines-1; el++) {
-      if (rank == 1 && el == 0) {el++;}
-      double *x = x_direction(w, dt, h, el);
-      MPI_Send(x, lines, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
       free(x);
     }
     
